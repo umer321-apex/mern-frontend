@@ -189,7 +189,7 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { TextField, Button, Typography, Box, Container } from "@mui/material";
-
+import axios from 'axios'
 const Register = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -205,11 +205,12 @@ const Register = () => {
 
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
+  console.log('api url', apiUrl);
   const handleRegister = async (e) => {
     e.preventDefault();
     setMessage("");
     try {
-      const response = await api.post(`${apiUrl}/register`, { username, email, password });
+      const response = await axios.post(`${apiUrl}/register`, { username, email, password });
 
       if (response.status === 201 && response.data.message) {
         setMessage(response.data.message);
