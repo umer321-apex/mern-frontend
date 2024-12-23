@@ -159,7 +159,7 @@ const UploadPage = () => {
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const userId = localStorage.getItem("authToken");
-
+  const apiUrl = process.env.REACT_APP_API_URL;
   const handleFileChange = (e) => {
     setVideo(e.target.files[0]);
   };
@@ -180,7 +180,7 @@ const UploadPage = () => {
     setLoading(true);
 
     try {
-      const response = await api.post('/videos/upload', formData);
+      const response = await api.post(`${apiUrl}/videos/upload`, formData);
       alert('Video uploaded successfully!');
       setTitle('');
       setDescription('');

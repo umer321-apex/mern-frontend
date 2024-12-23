@@ -115,11 +115,11 @@ const LoginVariant2 = () => {
   const [password, setPassword] = useState("");
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
-
+  const apiUrl = process.env.REACT_APP_API_URL;
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post("/login", { email, password });
+      const response = await api.post(`${apiUrl}/login`, { email, password });
       localStorage.setItem("authToken", response.data.userId);
       alert(response.data.message);
 

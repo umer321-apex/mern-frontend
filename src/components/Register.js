@@ -204,12 +204,12 @@ const Register = () => {
   });
 
   const navigate = useNavigate();
-
+  const apiUrl = process.env.REACT_APP_API_URL;
   const handleRegister = async (e) => {
     e.preventDefault();
     setMessage("");
     try {
-      const response = await api.post("/register", { username, email, password });
+      const response = await api.post(`${apiUrl}/register`, { username, email, password });
 
       if (response.status === 201 && response.data.message) {
         setMessage(response.data.message);

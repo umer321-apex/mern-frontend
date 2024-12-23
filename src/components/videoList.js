@@ -275,8 +275,10 @@ import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import api from "../services/api";
 
-const socket = io("http://localhost:5000");
 
+const socketUrl = process.env.SOCKET_UI;
+const socket = io(`${socketUrl}`);
+const apiUrl = process.env.REACT_APP_API_URL;
 const FeedPage = () => {
   const [videos, setVideos] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -305,7 +307,7 @@ const FeedPage = () => {
 
   const fetchVideos = async () => {
     try {
-      const { data } = await api.get("/videos/videos");
+      const { data } = await api.get(`${apiUrl}/videos/videos`);
       setVideos(data);
       setComments(data.map(() => []));
     } catch (err) {
