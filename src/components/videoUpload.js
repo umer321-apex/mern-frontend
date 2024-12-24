@@ -35,8 +35,13 @@ const UploadPage = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${apiUrl}/videos/upload`, formData);
-      
+    
+      const response = await axios.post(`${apiUrl}/videos/upload`, formData, {
+        headers: {
+          Authorization: `Bearer ${userId}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
       alert('Video uploaded successfully!');
       setTitle('');
       setDescription('');
