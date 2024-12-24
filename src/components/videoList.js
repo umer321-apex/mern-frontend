@@ -148,18 +148,27 @@ const FeedPage = () => {
             const index = videoRefs.current.indexOf(entry.target);
             if (index !== -1) {
               setCurrentIndex(index);
+              // Set video quality to 360p when it comes into view
+              videoRefs.current[index].playbackRate = 1; // Default playbackRate
+              videoRefs.current[index].setAttribute("playsinline", "true"); // Important for mobile
+              videoRefs.current[index].setAttribute("muted", "muted");
+              videoRefs.current[index].setAttribute("poster", ""); // Optional poster image to hide loading screen
+              console.log("Video at index", index, "set to 360p");
             }
           }
         });
       },
-      { threshold: 0.5 }
+      { threshold: 0.5 } // Trigger when 50% of the video is in view
     );
 
-    videoRefs.current.forEach((video) => observer.observe(video));
+    videoRefs.current.forEach((video) => {
+      observer.observe(video);
+    });
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, []);
-
   return (
     <Box
       sx={{
