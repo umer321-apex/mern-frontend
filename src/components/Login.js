@@ -21,7 +21,7 @@ const LoginVariant2 = () => {
     try {
       const response = await axios.post(`${apiUrl}/login`, { email, password });
       console.log('response from login',response.data.token);
-      localStorage.setItem("authToken", response.data.userId);
+      localStorage.setItem("authToken", response.data.token);
       alert(response.data.message);
 
       login(response.data.token);

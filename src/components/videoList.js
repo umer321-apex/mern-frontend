@@ -20,12 +20,11 @@ import CommentIcon from "@mui/icons-material/Comment";
 import DownloadIcon from "@mui/icons-material/Download";
 import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router-dom";
-import { io } from "socket.io-client";
+
 import api from "../services/api";
 
 import axios from 'axios'
-const socketUrl = process.env.SOCKET_UI;
-const socket = io(`${socketUrl}`);
+
 const apiUrl = process.env.REACT_APP_API_URL;
 const FeedPage = () => {
   const [videos, setVideos] = useState([]);
@@ -36,85 +35,110 @@ const FeedPage = () => {
   const navigate = useNavigate();
   const containerRef = useRef(null);
   const videoRefs = useRef([]);
+  const [likes, setLikes] = useState([]); // To store like status for each video
+
 
   useEffect(() => {
     fetchVideos();
 
-    socket.on("likeUpdated", ({ videoId, likes }) => {
-      setVideos((prevVideos) =>
-        prevVideos.map((video) =>
-          video._id === videoId ? { ...video, likes: new Array(likes).fill(1) } : video
-        )
-      );
-    });
-
-    return () => {
-      socket.off("likeUpdated");
-    };
+   
   }, []);
+
 
   const fetchVideos = async () => {
     try {
       const { data } = await axios.get(`${apiUrl}/videos/videos`);
-      setVideos(data);
-      setComments(data.map(() => []));
+      const updatedVideos = data.map(video => ({
+        ...video,
+        videoUrl: video.videoUrl.replace(/^http:/, 'https:') // Replace http with https
+      }));
+      setVideos(updatedVideos);
+      setComments(updatedVideos.map(() => []));
+      setLikes(updatedVideos.map(() => 0)); // Initially setting all likes to 0
     } catch (err) {
       console.error(err);
     }
   };
+  
 
-  const handleLike = async (id) => {
-    try {
-      await axios.put(`/videos/like/${id}`);
-    } catch (err) {
-      console.error(err);
+
+
+  const handleLike = (index) => {
+    const token = localStorage.getItem("authToken"); // Ensure the user is authenticated
+    console.log("Token found:", token); 
+    if (!token) {
+      console.log('no token present')
+      alert("You must be logged in to like.");
+      return;
     }
+    setLikes((prevLikes) => {
+      const newLikes = [...prevLikes];
+      newLikes[index] = newLikes[index] === 1 ? 0 : 1; // Toggle between 0 and 1
+      return newLikes;
+    });
   };
-
+  
   const handleCommentClick = () => setIsCommentDialogOpen(true);
 
-  const handleCommentSubmit = () => {
-    const newComment = { text: commentText };
-    setComments((prevComments) => {
-      const updatedComments = [...prevComments];
-      updatedComments[currentIndex].push(newComment);
-      return updatedComments;
-    });
-    setCommentText("");
-    setIsCommentDialogOpen(false);
-  };
 
-  // const handleDownload = () => {
-  //   const videoUrl = videos[currentIndex]?.videoUrl;
-  //   if (videoUrl) {
-  //     const link = document.createElement("a");
-  //     link.href = videoUrl;
-  //     link.download = `video-${currentIndex + 1}.mp4`;
-  //     link.click();
-  //   }
-  // };
+  const handleCommentSubmit = async () => {
+    const token = localStorage.getItem("authToken"); // Ensure the user is authenticated
+    console.log("Token found:", token); 
+    if (!token) {
+      console.log('no token present')
+      alert("You must be logged in to submit a comment.");
+      return;
+    }
+  
+    try {
+      const videoId = videos[currentIndex]?._id;
+      const response = await axios.post(
+        `${apiUrl}/videos/comment/${videoId}`,
+        { text: commentText },
+        { headers: { Authorization: `Bearer ${token}` } } // Pass the token for backend validation
+      );
+  
+      const newComment = { text: commentText };
+      setComments((prevComments) => {
+        const updatedComments = [...prevComments];
+        updatedComments[currentIndex].push(newComment);
+        return updatedComments;
+      });
+      setCommentText("");
+      setIsCommentDialogOpen(false);
+    } catch (err) {
+      console.error("Failed to submit comment:", err);
+    }
+  };
+  
+
+ 
 
   const handleDownload = async () => {
     const videoUrl = videos[currentIndex]?.videoUrl;
     if (videoUrl) {
       try {
-        const response = await fetch(videoUrl); // Fetch the video file
-        const blob = await response.blob(); // Convert the response into a Blob
-        const blobUrl = URL.createObjectURL(blob); // Create a temporary URL for the Blob
-        
-        // Trigger the download
+        console.log("Attempting to download video from:", videoUrl);
+        const response = await fetch(videoUrl);
+        if (!response.ok) {
+          console.error(`Failed to fetch video. Status: ${response.status}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+  
         const link = document.createElement("a");
         link.href = blobUrl;
-        link.download = `video-${currentIndex + 1}.mp4`; // Filename for the downloaded video
+        link.download = `video-${currentIndex + 1}.mp4`;
         link.click();
   
-        // Release the Blob URL after the download is triggered
         URL.revokeObjectURL(blobUrl);
       } catch (error) {
         console.error("Error downloading the video:", error);
       }
     }
   };
+  
   
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -187,12 +211,12 @@ const FeedPage = () => {
       >
         <IconButton
           sx={{ color: "#64b5f6" }}
-          onClick={() => handleLike(videos[currentIndex]?._id)}
+          onClick={() => handleLike(currentIndex)}
         >
           <FavoriteIcon />
         </IconButton>
         <Typography sx={{ color: "#fff", fontSize: "0.8rem", textAlign: "center" }}>
-          {videos[currentIndex]?.likes?.length || 0}
+          {likes[currentIndex] || 0} {/* Display the like count (0 or 1) */}
         </Typography>
         <IconButton sx={{ color: "#64b5f6" }} onClick={handleCommentClick}>
           <CommentIcon />
