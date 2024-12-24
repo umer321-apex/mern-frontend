@@ -35,7 +35,7 @@ const UploadPage = () => {
     setLoading(true);
 
     try {
-      const response = await api.post('/videos/upload', formData);
+      const response = await axios.post(`${apiUrl}/videos/upload`, formData);
       
       alert('Video uploaded successfully!');
       setTitle('');
